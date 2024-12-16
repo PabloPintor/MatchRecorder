@@ -98,10 +98,10 @@ public class SideBarGenerator {
   }
 
   public void displayUpdatedSidebar(List<Component> new_rows) {
-    for (int i = 0; i < MAX_ROWS; i++) {
+    for (int i = 0; i < Math.min(new_rows.size(), MAX_ROWS); i++) {
       String cached_row = this.rows.get(i);
       String row = LegacyComponentSerializer.legacySection().serialize(new_rows.get(i));
-      if (cached_row.equalsIgnoreCase(row)) continue;
+      if (row.equalsIgnoreCase(cached_row)) continue;
       this.rows.set(i, row);
       if (row.equalsIgnoreCase(this.baseString + ":" + i)) {
         removeTeamPacket(i);

@@ -24,7 +24,6 @@ import tc.oc.pgm.api.match.MatchScope;
 import tc.oc.pgm.api.match.event.MatchFinishEvent;
 import tc.oc.pgm.api.match.event.MatchStartEvent;
 import tc.oc.pgm.api.player.MatchPlayer;
-import tc.oc.pgm.api.player.ParticipantState;
 import tc.oc.pgm.controlpoint.events.ControllerChangeEvent;
 import tc.oc.pgm.core.Core;
 import tc.oc.pgm.core.CoreLeakEvent;
@@ -52,7 +51,7 @@ import tc.oc.pgm.score.ScoreMatchModule;
 import tc.oc.pgm.util.TimeUtils;
 import tc.oc.pgm.util.event.PlayerCoarseMoveEvent;
 import tc.oc.pgm.util.event.PlayerItemTransferEvent;
-import tc.oc.pgm.util.material.matcher.SingleMaterialMatcher;
+import tc.oc.pgm.util.material.MaterialMatcher;
 import tc.oc.pgm.util.named.NameStyle;
 import tc.oc.pgm.util.text.TemporalComponent;
 import tc.oc.pgm.util.text.TextFormatter;
@@ -267,13 +266,12 @@ public class MatchListener implements Listener {
     MatchPlayer player = match.getPlayer(event.getPlayer());
     if (player == null || !player.canInteract() || player.getBukkit().isDead()) return;
 
-    ParticipantState playerState = player.getParticipantState();
     Vector from = event.getBlockFrom().toVector();
     Vector to = event.getBlockTo().toVector();
 
     for (ScoreBox box : smm.getScoreboxes()) {
-      if (box.getRegion().enters(from, to) && box.canScore(playerState)) {
-        if (!box.isCoolingDown(playerState)) {
+      if (box.getRegion().enters(from, to) && box.canScore(player)) {
+        if (!box.isCoolingDown(player)) {
           this.playerScore(box, player, box.getScore() + redeemItems(box, player.getInventory()));
         }
       }
@@ -293,7 +291,7 @@ public class MatchListener implements Listener {
     for (final ScoreBox box : smm.getScoreboxes()) {
       if (!box.getRedeemables().isEmpty()
           && box.getRegion().contains(player.getBukkit())
-          && box.canScore(player.getParticipantState())) {
+          && box.canScore(player)) {
         match
             .getExecutor(MatchScope.RUNNING)
             .execute(
@@ -310,8 +308,8 @@ public class MatchListener implements Listener {
   private double redeemItems(ScoreBox box, ItemStack stack) {
     if (stack == null) return 0;
     double points = 0;
-    for (Entry<SingleMaterialMatcher, Double> entry : box.getRedeemables().entrySet()) {
-      if (entry.getKey().matches(stack.getData())) {
+    for (Entry<MaterialMatcher, Double> entry : box.getRedeemables().entrySet()) {
+      if (entry.getKey().matches(stack)) {
         points += entry.getValue() * stack.getAmount();
         // stack.setAmount(0);
       }
